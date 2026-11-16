@@ -1,3 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { adminClient } from "better-auth/client/plugins";
+import { sslAuthClient } from "@newt-app-ssl-auth-example/auth/client";
 
-export const authClient = createAuthClient();
+export const authClient = createAuthClient({ plugins: [sslAuthClient(), adminClient()] });

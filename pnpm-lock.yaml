@@ -123,6 +123,9 @@ importers:
       dotenv:
         specifier: ^17.3.1
         version: 17.4.2
+      lucide-react:
+        specifier: ^1.73.0
+        version: 1.73.0(@types/react@19.2.14)(react@19.3.1)
       next:
         specifier: 16.4.6
         version: 16.4.6(@babel/core@7.29.13(supports-color@7.2.0))(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -175,6 +178,9 @@ importers:
       better-auth:
         specifier: ^1.2.8
         version: 1.7.25(next@16.4.6(@babel/core@7.29.13(supports-color@7.2.0))(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@4.1.12)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@newt-app-ssl-auth-example/typescript-config':
         specifier: workspace:*

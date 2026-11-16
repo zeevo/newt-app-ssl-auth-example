@@ -4,6 +4,11 @@ export interface UserTable {
   email: string;
   emailVerified: number;
   image: string | null;
+  dn: string | null;
+  role: string | null;
+  banned: number | null;
+  banReason: string | null;
+  banExpires: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -17,6 +22,7 @@ export interface SessionTable {
   ipAddress: string | null;
   userAgent: string | null;
   userId: string;
+  impersonatedBy: string | null;
 }
 
 export interface AccountTable {

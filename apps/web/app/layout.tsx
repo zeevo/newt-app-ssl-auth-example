@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Providers from "@/app/providers";
+import { AppShell } from "@/app/app-shell";
+import { AuthGate } from "@/app/auth-gate";
 import { Toaster } from "@newt-app-ssl-auth-example/ui/sonner";
 import "@newt-app-ssl-auth-example/ui/globals.css";
 
@@ -34,7 +36,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} h-full`}>
         <Providers>
-          {children}
+          <AuthGate>
+            <AppShell>{children}</AppShell>
+          </AuthGate>
           <Toaster />
         </Providers>
       </body>

@@ -1,14 +1,17 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "@newt-app-ssl-auth-example/api";
+import { AppModule, loadUsersConfig } from "@newt-app-ssl-auth-example/api";
 import type { INestApplicationContext, Type, Abstract } from "@nestjs/common";
 
 let context: Promise<INestApplicationContext> | null = null;
 
 export function getContext(): Promise<INestApplicationContext> {
-  context ??= NestFactory.createApplicationContext(AppModule, {
-    logger: false,
-  });
+  context ??= NestFactory.createApplicationContext(
+    AppModule.register(loadUsersConfig(process.env)),
+    {
+      logger: false,
+    },
+  );
   return context;
 }
 

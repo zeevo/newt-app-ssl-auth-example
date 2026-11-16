@@ -10,6 +10,8 @@ dotenv.config({ path: resolve(process.cwd(), ".env") });
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  // Keep the dev indicator off the sidebar's bottom-left Admin link.
+  devIndicators: { position: "bottom-right" },
   serverExternalPackages: [
     "@newt-app-ssl-auth-example/api",
     "@newt-app-ssl-auth-example/db",
