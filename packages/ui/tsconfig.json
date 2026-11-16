@@ -1,0 +1,12 @@
+{
+  "extends": "@newt-app-ssl-auth-example/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "strictNullChecks": true,
+    "paths": {
+      "@newt-app-ssl-auth-example/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

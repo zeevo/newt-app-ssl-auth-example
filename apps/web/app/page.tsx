@@ -1,0 +1,109 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
+import { AuthForm } from "@/app/auth-form";
+import { Button } from "@newt-app-ssl-auth-example/ui/button";
+import { Link } from "@newt-app-ssl-auth-example/ui/link";
+import { Logo } from "@newt-app-ssl-auth-example/ui/logo";
+import { ModeToggle } from "@newt-app-ssl-auth-example/ui/mode-toggle";
+import { Card, CardContent, CardHeader } from "@newt-app-ssl-auth-example/ui/card";
+
+export default function Home() {
+  const { data: session, isPending } = authClient.useSession();
+
+  const { data: hello } = useQuery({
+    queryKey: ["hello", session?.user.id],
+    queryFn: () => fetch("/api/hello").then((r) => r.json()),
+  });
+
+  return (
+    <main className="max-w-lg mx-auto min-h-full px-4 py-8 space-y-4">
+      <div className="pb-4 border-b flex items-start justify-between">
+        <div>
+          <p className="font-mono text-sm text-muted-foreground">apps/web/app/page.tsx</p>
+          <p className="text-sm text-muted-foreground">Delete me to get started!</p>
+        </div>
+        <ModeToggle />
+      </div>
+
+      <div className="flex items-center gap-3 py-2">
+        <Logo className="w-10 h-auto" />
+        <div>
+          <h1 className="text-4xl font-black tracking-tight">newt-app-ssl-auth-example</h1>
+          <p className="text-sm text-muted-foreground tracking-widest uppercase">
+            Next + Nest = Newt 💜
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            next.js
+          </p>
+        </CardHeader>
+        <CardContent>
+          <p className="font-mono text-sm text-muted-foreground">apps/web/app/layout.tsx</p>
+          <p className="text-sm text-muted-foreground">Next.js rendering</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            nest.js
+          </p>
+        </CardHeader>
+        <CardContent>
+          <p className="font-mono text-sm text-muted-foreground">
+            GET /api/hello, served by a Next.js route handler
+          </p>
+          <pre className="mt-2 rounded-md border p-3 text-sm bg-muted/50">
+            <code>{JSON.stringify(hello, null, 2)}</code>
+          </pre>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            better-auth
+          </p>
+        </CardHeader>
+        <CardContent>
+          {isPending ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : session ? (
+            <div className="space-y-3">
+              <p className="text-sm">Signed in as {session.user.name}</p>
+              <Button variant="outline" onClick={() => authClient.signOut()}>
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <AuthForm />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="px-2 py-4 text-sm">
+        <p className="mb-2 text-muted-foreground">Learn more</p>
+        <ul className="list-disc list-inside space-y-2 mt-2">
+          <li>
+            <Link href="https://newt-app.com">newt-app</Link>
+          </li>
+          <li>
+            <Link href="https://github.com/zeevo/newt-app">GitHub</Link>
+          </li>
+          <li>
+            <Link href="https://nextjs.org">Next.js</Link>
+          </li>
+          <li>
+            <Link href="https://nestjs.com">NestJS</Link>
+          </li>
+        </ul>
+      </div>
+    </main>
+  );
+}

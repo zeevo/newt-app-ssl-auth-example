@@ -1,0 +1,11 @@
+import { betterAuth } from "better-auth";
+import { driver } from "@newt-app-ssl-auth-example/db";
+
+export const auth = betterAuth({
+  database: driver,
+  emailAndPassword: { enabled: true },
+  trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
+  advanced: { database: { validateSchema: !process.env.AUTH_CLI } },
+});
+
+export type Auth = typeof auth;
