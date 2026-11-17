@@ -1,13 +1,9 @@
 x-app-env: &app-env
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-  # Better Auth trusts this origin; without it every deployment falls back to
-  # localhost:3000 and rejects requests from the real one.
   BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://localhost}
   DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/newt
 
 services:
-  # The only way in. The app trusts the X-DN header it sets, so web must not be
-  # reachable except through this proxy.
   nginx:
     image: nginx:1.27-alpine
     ports:
@@ -41,6 +37,9 @@ services:
     environment:
       <<: *app-env
       DN_HEADER: x-dn
+      INITIAL_ADMIN_DN: ${INITIAL_ADMIN_DN:-}
+      INITIAL_ADMIN_NAME: ${INITIAL_ADMIN_NAME:-}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

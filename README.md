@@ -36,7 +36,9 @@ Users have a `role` of `user` or `admin` (better-auth's admin plugin). Admins ge
 
 A new user's name and email come from the Nest `UserDirectory` (`apps/api/src/users/user-directory.ts`), looked up by DN. The bound implementation, `CommonNameUserDirectory`, is a stand-in: the name is the DN's CN and the email is a unique `@users.invalid` placeholder. In production, bind an implementation that calls the external directory API instead. The lookup only runs once the caller is confirmed to be an admin, and before the user is written, so a slow directory never holds the database. The plugin's endpoints check the caller's role on the server, so non-admins get a 403 whatever the UI shows. Admins cannot change their own role, so at least one admin always remains.
 
-The first admin has to be created in the database, for example:
+When deploying, set `INITIAL_ADMIN_DN`, `INITIAL_ADMIN_NAME` and `INITIAL_ADMIN_EMAIL` (all three, or none) and the app creates that admin when it starts, if no user has that DN yet. A user who already has the DN is never changed, so the variables can stay set: demoting or deleting that admin in the panel sticks until the next restart, when a deleted one is created again. Startup fails if only some are set or the email is invalid.
+
+Alternatively, create the first admin in the database, for example:
 
 ```sql
 INSERT INTO "user" (id, name, email, "emailVerified", dn, role)
@@ -80,6 +82,7 @@ Set in `.env` (a committed `.env.example` documents each one):
 - **DN_HEADER**: header holding the client certificate DN (default `x-dn`)
 - **DATABASE_URL**: Postgres connection string (`.env.example` matches `pnpm db:up`)
 - **POSTGRES_PASSWORD**: `docker compose` only, the password for its Postgres service
+- **INITIAL_ADMIN_DN**, **INITIAL_ADMIN_NAME**, **INITIAL_ADMIN_EMAIL**: deployment only, an optional admin created on startup (see Roles)
 
 ## Layout
 
