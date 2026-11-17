@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Inject, Injectable, type OnApplicationBootstrap } from "@nestjs/common";
 import { USER_REPOSITORY, type UserRepository } from "./user.repository";
-import { USERS_CONFIG, type UsersConfig } from "./users.config";
+import { APP_CONFIG, type AppConfig } from "../app.config";
 
 /**
  * Creates the admin named by the INITIAL_ADMIN_* variables when the app starts,
@@ -12,7 +12,7 @@ import { USERS_CONFIG, type UsersConfig } from "./users.config";
 @Injectable()
 export class InitialAdmin implements OnApplicationBootstrap {
   constructor(
-    @Inject(USERS_CONFIG) private readonly config: UsersConfig,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
   ) {}
 

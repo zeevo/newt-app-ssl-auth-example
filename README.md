@@ -74,7 +74,7 @@ The stack runs its own Postgres (`postgres` service, data in the `pg_data` volum
 
 ## Environment
 
-Set in `.env` (a committed `.env.example` documents each one):
+Set in `.env` (a committed `.env.example` documents each one). The app reads them all once, at startup, into a validated `AppConfig` (`apps/api/src/app.config.ts`) that Nest injects where needed; a missing or invalid value stops the server from starting.
 
 - **BETTER_AUTH_URL**: the public origin of the app
 - **BETTER_AUTH_SECRET**: a random secret used to sign sessions

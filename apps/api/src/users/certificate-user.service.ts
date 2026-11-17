@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { User } from "./user";
 import { USER_REPOSITORY, type UserRepository } from "./user.repository";
 import type { UserService } from "./user.service";
-import { USERS_CONFIG, type UsersConfig } from "./users.config";
+import { APP_CONFIG, type AppConfig } from "../app.config";
 
 /**
  * Signs in the user whose client certificate DN, forwarded by the nginx
@@ -11,7 +11,7 @@ import { USERS_CONFIG, type UsersConfig } from "./users.config";
 @Injectable()
 export class CertificateUserService implements UserService {
   constructor(
-    @Inject(USERS_CONFIG) private readonly config: UsersConfig,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
   ) {}
 

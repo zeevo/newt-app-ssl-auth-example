@@ -4,8 +4,14 @@ import { DEVIN, DevinUserService } from "./devin-user.service";
 import { InMemoryUserRepository } from "./in-memory-user.repository";
 import { USER_REPOSITORY } from "./user.repository";
 import { USER_SERVICE, type UserService } from "./user.service";
-import { loadUsersConfig } from "./users.config";
+import { loadAppConfig } from "../app.config";
 import { UsersModule } from "./users.module";
+
+// Variables the app can't start without; never connected to in these tests.
+const required = {
+  DATABASE_URL: "postgres://localhost/unused",
+  BETTER_AUTH_SECRET: "test-secret",
+};
 
 const alice = {
   id: "alice",
@@ -17,7 +23,7 @@ const alice = {
 
 async function userService(env: NodeJS.ProcessEnv, repository: InMemoryUserRepository) {
   const moduleRef = await Test.createTestingModule({
-    imports: [UsersModule.register(loadUsersConfig(env))],
+    imports: [UsersModule.register(loadAppConfig({ ...required, ...env }))],
   })
     .overrideProvider(USER_REPOSITORY)
     .useValue(repository)
@@ -111,20 +117,36 @@ describe("UsersModule", () => {
   });
 });
 
-describe("loadUsersConfig", () => {
+describe("loadAppConfig", () => {
+  it("requires DATABASE_URL and BETTER_AUTH_SECRET", () => {
+    expect(() => loadAppConfig({})).toThrow();
+    expect(loadAppConfig(required)).toMatchObject({
+      databaseUrl: required.DATABASE_URL,
+      authUrl: "http://localhost:3000",
+      userService: "certificate",
+      initialAdmin: null,
+    });
+  });
+
   it("refuses the Devin service in production", () => {
-    expect(() => loadUsersConfig({ USER_SERVICE: "devin", NODE_ENV: "production" })).toThrow();
+    expect(() =>
+      loadAppConfig({ ...required, USER_SERVICE: "devin", NODE_ENV: "production" }),
+    ).toThrow();
   });
 
   it("rejects an unknown USER_SERVICE", () => {
-    expect(() => loadUsersConfig({ USER_SERVICE: "nobody" })).toThrow();
+    expect(() => loadAppConfig({ ...required, USER_SERVICE: "nobody" })).toThrow();
   });
 
   it("requires all INITIAL_ADMIN_* variables together", () => {
-    expect(() => loadUsersConfig({ INITIAL_ADMIN_DN: "CN=Root" })).toThrow(/set together/);
+    expect(() => loadAppConfig({ ...required, INITIAL_ADMIN_DN: "CN=Root" })).toThrow(
+      /set together/,
+    );
   });
 
   it("rejects an invalid INITIAL_ADMIN_EMAIL", () => {
-    expect(() => loadUsersConfig({ ...initialAdminEnv, INITIAL_ADMIN_EMAIL: "nope" })).toThrow();
+    expect(() =>
+      loadAppConfig({ ...required, ...initialAdminEnv, INITIAL_ADMIN_EMAIL: "nope" }),
+    ).toThrow();
   });
 });

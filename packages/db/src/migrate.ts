@@ -1,7 +1,9 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { FileMigrationProvider, Migrator } from "kysely";
-import { db } from "./index.js";
+import { createDatabase } from "./index.js";
+
+const db = createDatabase(process.env.DATABASE_URL ?? "");
 
 async function main() {
   const migrationFolder = path.join(process.cwd(), "src/migrations");

@@ -2,7 +2,7 @@ import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint, createAuthMiddleware } from "better-auth/api";
 import { admin } from "better-auth/plugins";
 import { setSessionCookie } from "better-auth/cookies";
-import { pool } from "@newt-app-ssl-auth-example/db";
+import type { Database } from "@newt-app-ssl-auth-example/db";
 import { z } from "zod";
 
 export interface DirectoryEntry {
@@ -104,15 +104,24 @@ export function sslAuth(options: SslAuthOptions, canCreateUsers: CanCreateUsers)
   } satisfies BetterAuthPlugin;
 }
 
-export function createAuth(ssl: SslAuthOptions) {
+export interface AuthOptions {
+  database: Database;
+  /** The app's public origin, the only one better-auth accepts requests from. */
+  baseURL: string;
+  /** Signs sessions. Optional only for the CLI, which never signs anything. */
+  secret?: string;
+}
+
+export function createAuth(options: AuthOptions, ssl: SslAuthOptions) {
   // The permission check needs the finished instance, so bind it afterwards.
   let canCreateUsers: CanCreateUsers = async () => false;
   const auth = betterAuth({
-    database: pool,
+    database: { db: options.database, type: "postgres" },
+    baseURL: options.baseURL,
+    secret: options.secret,
     // No sign-up or password sign-in: admins add users, who sign in only with
     // a client certificate.
     emailAndPassword: { enabled: false },
-    trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
     advanced: { database: { validateSchema: !process.env.AUTH_CLI } },
     // Roles: admins manage users through the admin plugin's endpoints, which
     // check the caller's role on the server.
