@@ -4,8 +4,10 @@
   "scripts": {
     "build": "turbo run build",
     "db:generate": "turbo run generate",
+    "db:down": "docker compose -f docker-compose.dev.yml down",
     "db:make": "pnpm --filter @newt-app-ssl-auth-example/db run make",
     "db:migrate": "turbo run migrate",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "dev": "turbo run dev",
     "dev:devin": "USER_SERVICE=devin turbo run dev",
     "format": "oxfmt --check",

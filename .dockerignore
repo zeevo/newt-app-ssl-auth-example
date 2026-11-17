@@ -6,7 +6,6 @@ dist
 .env
 .env.*
 !.env.example
-dev.db*
 .git
 coverage
 nginx/certs

@@ -20,10 +20,10 @@ export class KyselyUserRepository implements UserRepository {
   }
 
   async create(user: User): Promise<User> {
-    const now = new Date().toISOString();
+    const now = new Date();
     await this.db
       .insertInto("user")
-      .values({ ...user, emailVerified: 1, image: null, createdAt: now, updatedAt: now })
+      .values({ ...user, emailVerified: true, image: null, createdAt: now, updatedAt: now })
       .execute();
     return user;
   }

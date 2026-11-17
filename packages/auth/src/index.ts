@@ -2,7 +2,7 @@ import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint, createAuthMiddleware } from "better-auth/api";
 import { admin } from "better-auth/plugins";
 import { setSessionCookie } from "better-auth/cookies";
-import { driver } from "@newt-app-ssl-auth-example/db";
+import { pool } from "@newt-app-ssl-auth-example/db";
 import { z } from "zod";
 
 export interface DirectoryEntry {
@@ -108,7 +108,7 @@ export function createAuth(ssl: SslAuthOptions) {
   // The permission check needs the finished instance, so bind it afterwards.
   let canCreateUsers: CanCreateUsers = async () => false;
   const auth = betterAuth({
-    database: driver,
+    database: pool,
     // No sign-up or password sign-in: admins add users, who sign in only with
     // a client certificate.
     emailAndPassword: { enabled: false },

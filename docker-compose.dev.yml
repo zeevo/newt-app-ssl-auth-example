@@ -1,0 +1,24 @@
+# Postgres for local development (pnpm db:up). Matches DATABASE_URL in
+# .env.example. Its own project name keeps it apart from docker-compose.yml.
+name: newt-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: newt
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_dev_data:/var/lib/postgresql/data
+    # Lets `up --wait` (pnpm db:up) return only once Postgres accepts connections.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d newt"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  pg_dev_data:

@@ -1,25 +1,13 @@
-import BetterSqlite3 from "better-sqlite3";
-import { Kysely, SqliteDialect } from "kysely";
-import fs from "node:fs";
-import path from "node:path";
+import { Kysely, PostgresDialect } from "kysely";
+import pg from "pg";
 import type { DB } from "./schema.js";
 
-function projectRoot(from: string) {
-  for (let dir = from; ;) {
-    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) return dir;
-    const parent = path.dirname(dir);
-    if (parent === dir) return from;
-    dir = parent;
-  }
-}
-
-export const databaseFile =
-  process.env.DATABASE_URL ?? path.join(projectRoot(process.cwd()), "dev.db");
-
-export const driver = new BetterSqlite3(databaseFile);
+// Connects lazily, on the first query, so importing this package (during a
+// build, or in unit tests) needs no running database.
+export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
 export const db = new Kysely<DB>({
-  dialect: new SqliteDialect({ database: driver }),
+  dialect: new PostgresDialect({ pool }),
 });
 
 export type Database = Kysely<DB>;

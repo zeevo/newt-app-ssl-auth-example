@@ -12,12 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "better-sqlite3": "^12.11.1",
-    "kysely": "^0.28.2"
+    "kysely": "^0.28.2",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@newt-app-ssl-auth-example/typescript-config": "workspace:*",
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/pg": "^8.23.1",
     "dotenv-cli": "^11.0.0",
     "tsx": "^4.19.4",
     "typescript": "6.0.2"

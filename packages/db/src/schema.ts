@@ -2,23 +2,23 @@ export interface UserTable {
   id: string;
   name: string;
   email: string;
-  emailVerified: number;
+  emailVerified: boolean;
   image: string | null;
   dn: string | null;
   role: string | null;
-  banned: number | null;
+  banned: boolean | null;
   banReason: string | null;
-  banExpires: string | null;
-  createdAt: string;
-  updatedAt: string;
+  banExpires: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface SessionTable {
   id: string;
-  expiresAt: string;
+  expiresAt: Date;
   token: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   ipAddress: string | null;
   userAgent: string | null;
   userId: string;
@@ -33,21 +33,21 @@ export interface AccountTable {
   accessToken: string | null;
   refreshToken: string | null;
   idToken: string | null;
-  accessTokenExpiresAt: string | null;
-  refreshTokenExpiresAt: string | null;
+  accessTokenExpiresAt: Date | null;
+  refreshTokenExpiresAt: Date | null;
   scope: string | null;
   password: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface VerificationTable {
   id: string;
   identifier: string;
   value: string;
-  expiresAt: string;
-  createdAt: string;
-  updatedAt: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface DB {
