@@ -68,7 +68,7 @@ The stack runs its own Postgres (`postgres` service, data in the `pg_data` volum
 - `pnpm dev`: run in development
 - `pnpm dev:devin`: run in development, signed in as Devin E. Loper
 - `pnpm build`, `pnpm typecheck`, `pnpm test`: build, type-check, and test every workspace
-- `pnpm lint:check`: lint (fails on errors); `pnpm format:fix`: apply formatting
+- `pnpm lint`: lint (fails on errors); `pnpm format`: apply formatting
 - `pnpm db:up` / `pnpm db:down`: start or stop the local development Postgres
 - `pnpm db:migrate`: run migrations; `pnpm db:make <name>`: scaffold a new one
 
