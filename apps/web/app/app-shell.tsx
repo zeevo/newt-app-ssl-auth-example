@@ -52,7 +52,8 @@ function NavMenu({ items, pathname }: { items: NavItem[]; pathname: string }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  // The static export uses trailing slashes (/admin/); nav hrefs don't.
+  const pathname = usePathname().replace(/(.)\/$/, "$1");
   const { data: session } = authClient.useSession();
   const isAdmin = session?.user.role === "admin";
 

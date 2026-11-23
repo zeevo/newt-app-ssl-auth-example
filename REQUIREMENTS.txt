@@ -1,0 +1,21 @@
+# Background
+
+This is a prototype to show off how one could implement a full stack, enterprise, Next.js + Nest Dependency Injection application.
+
+# Requirements
+
+## Authentication
+
+You are to implement certificate based authentication by way of an nginx reverse proxy which puts on headers such as...
+
+- X-DN : The DN of the incoming certificate
+
+You are to log the user in if the incoming DN is in the Users table.
+
+## Development help
+
+In development, the developer needs to spoof as a "logged in" Devin E. Loper user. I should be able to run pnpm dev:devin to start the server as devin. Nest.js Dependency Injection must be used to cleanly mock out any UserService interfaces. Use SOLID principles. Bind to interfaces not implements. Environment variables should be used for configuration and changing implementations.
+
+## Deployment
+
+We will be deploying this in Docker behind a real nginx reverse proxy.

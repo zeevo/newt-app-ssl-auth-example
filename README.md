@@ -61,7 +61,7 @@ docker compose up --build   # needs BETTER_AUTH_SECRET and POSTGRES_PASSWORD set
 
 `docker compose` reads the root `.env`, so set `BETTER_AUTH_URL=https://localhost` there (or in the shell) first. The dev value `http://localhost:3000` makes better-auth reject admin actions through nginx with "Invalid origin".
 
-The stack runs its own Postgres (`postgres` service, data in the `pg_data` volume, not published to the host); the `migrate` service applies migrations before the app starts. Open [https://localhost](https://localhost) with a client certificate (import `nginx/certs/devin.p12`, password `devin`). Requests without a valid certificate are rejected by nginx. For a real deployment, replace the certificates in `nginx/certs`, set `BETTER_AUTH_URL` to the public URL, and keep the `web` service unreachable except through nginx, since it trusts `X-DN`.
+The stack runs its own Postgres (`postgres` service, data in the `pg_data` volume, not published to the host); the `migrate` service applies migrations before the app starts. Open [https://localhost](https://localhost) with a client certificate (import `nginx/certs/devin.p12`, password `devin`). Requests without a valid certificate are rejected by nginx. For a real deployment, replace the certificates in `nginx/certs`, set `BETTER_AUTH_URL` to the public URL, and keep the `app` service unreachable except through nginx, since it trusts `X-DN`.
 
 ## Commands
 
@@ -86,6 +86,6 @@ Set in `.env` (a committed `.env.example` documents each one). The app reads the
 
 ## Layout
 
-- **`apps/web`**: Next.js frontend (port 3000)
-- **`apps/api`**: NestJS providers, resolved in-process by the web app
+- **`apps/web`**: Next.js frontend, a static export (SPA). In development `next dev` runs on port 3000 and proxies `/api` to Nest.
+- **`apps/api`**: NestJS server (port 3001). It serves `/api`, including better-auth on `/api/auth`, and in production also serves the web app's static export, so the deployed app is one Nest process. Every API route requires a session unless marked `@AllowAnonymous()`.
 - **`packages/`**: `auth`, `db`, `ui`, and shared `typescript-config`

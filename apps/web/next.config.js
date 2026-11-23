@@ -5,24 +5,28 @@ import { resolve } from "path";
 dotenv.config({ path: resolve(process.cwd(), "../../.env") });
 dotenv.config({ path: resolve(process.cwd(), ".env") });
 
-// No /api rewrite: Next serves /api itself, so there is no api container to
-// proxy to.
+const isProduction = process.env.NODE_ENV === "production";
+
+// Keep the dev indicator off the sidebar's bottom-left Admin link.
+const devIndicators = { position: "bottom-right" };
+
+// Static export in production, served by NestJS via ServeStaticModule.
+// rewrites() is incompatible with output: "export", so dev uses the proxy
+// and production uses the static files. trailingSlash writes /admin as
+// admin/index.html, which the static server finds without extra routing.
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: "standalone",
-  // Keep the dev indicator off the sidebar's bottom-left Admin link.
-  devIndicators: { position: "bottom-right" },
-  serverExternalPackages: [
-    "@newt-app-ssl-auth-example/api",
-    "@newt-app-ssl-auth-example/db",
-    "@nestjs/core",
-    "@nestjs/common",
-    "@nestjs/microservices",
-    "@nestjs/websockets",
-    "@thallesp/nestjs-better-auth",
-    "reflect-metadata",
-    "express",
-  ],
-};
+const nextConfig = isProduction
+  ? { output: "export", trailingSlash: true, devIndicators }
+  : {
+      devIndicators,
+      async rewrites() {
+        return [
+          {
+            source: "/api/:path*",
+            destination: "http://localhost:3001/api/:path*",
+          },
+        ];
+      },
+    };
 
 export default nextConfig;

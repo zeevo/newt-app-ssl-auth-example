@@ -7,19 +7,19 @@ FROM base AS build
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm build --filter=web --filter=@newt-app-ssl-auth-example/api --filter=@newt-app-ssl-auth-example/auth
+RUN pnpm build --filter=web --filter=@newt-app-ssl-auth-example/api
 
-# --- web ---
-# One image: Nest is wired into the Next.js server rather than bootstrapped
-# on its own port, so there is no separate api stage.
-FROM base AS web
+# --- app ---
+# One image: Nest serves the API and web's static export (apps/web/out). The
+# workspace packages it imports ship as TypeScript source, so the whole built
+# workspace is copied rather than a pruned bundle.
+FROM base AS app
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build /app/apps/web/public ./apps/web/public
-EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+COPY --from=build /app ./
+WORKDIR /app/apps/api
+EXPOSE 3001
+CMD ["node", "dist/main"]
 
 # --- migrate ---
 FROM build AS migrate
