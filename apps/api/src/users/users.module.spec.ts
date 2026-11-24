@@ -1,6 +1,6 @@
 import { Test } from "@nestjs/testing";
 import { CertificateUserService } from "./certificate-user.service";
-import { DEVIN, DevinUserService } from "./devin-user.service";
+import { DEVIN, DEVIN_ORGANIZATION, DevinUserService } from "./devin-user.service";
 import { InMemoryUserRepository } from "./in-memory-user.repository";
 import { USER_REPOSITORY } from "./user.repository";
 import { USER_SERVICE, type UserService } from "./user.service";
@@ -18,7 +18,6 @@ const alice = {
   dn: "CN=Alice,O=Example,C=US",
   name: "Alice",
   email: "a@example.com",
-  role: "user",
 };
 
 async function userService(env: NodeJS.ProcessEnv, repository: InMemoryUserRepository) {
@@ -33,10 +32,11 @@ async function userService(env: NodeJS.ProcessEnv, repository: InMemoryUserRepos
   return moduleRef.get<UserService>(USER_SERVICE);
 }
 
-const initialAdminEnv = {
-  INITIAL_ADMIN_DN: "CN=Root,O=Example,C=US",
-  INITIAL_ADMIN_NAME: "Root Admin",
-  INITIAL_ADMIN_EMAIL: "root@example.com",
+const initialOwnerEnv = {
+  INITIAL_OWNER_DN: "CN=Root,O=Example,C=US",
+  INITIAL_OWNER_NAME: "Root Owner",
+  INITIAL_OWNER_EMAIL: "root@example.com",
+  INITIAL_ORGANIZATION: "Example Corp.",
 };
 
 describe("UsersModule", () => {
@@ -82,25 +82,36 @@ describe("UsersModule", () => {
     });
   });
 
-  describe("initial admin", () => {
-    it("creates the admin on startup", async () => {
-      const users = await userService(initialAdminEnv, repository);
-      expect(repository.users.find((user) => user.dn === initialAdminEnv.INITIAL_ADMIN_DN)).toEqual(
-        expect.objectContaining({ name: "Root Admin", email: "root@example.com", role: "admin" }),
+  describe("initial owner", () => {
+    it("creates the owner and their organization on startup", async () => {
+      const users = await userService(initialOwnerEnv, repository);
+      const owner = await users.authenticate(
+        new Headers({ "X-DN": initialOwnerEnv.INITIAL_OWNER_DN }),
       );
-      expect(
-        await users.authenticate(new Headers({ "X-DN": initialAdminEnv.INITIAL_ADMIN_DN })),
-      ).toEqual(expect.objectContaining({ role: "admin" }));
+      expect(owner).toEqual(
+        expect.objectContaining({ name: "Root Owner", email: "root@example.com" }),
+      );
+      expect(repository.organizations).toEqual([{ name: "Example Corp.", slug: "example-corp" }]);
+      expect(repository.members).toEqual([
+        { userId: owner?.id, slug: "example-corp", role: "owner" },
+      ]);
     });
 
     it("leaves an existing user with that DN alone", async () => {
-      await userService({ ...initialAdminEnv, INITIAL_ADMIN_DN: alice.dn }, repository);
+      await userService({ ...initialOwnerEnv, INITIAL_OWNER_DN: alice.dn }, repository);
       expect(repository.users).toEqual([alice]);
+      expect(repository.organizations).toEqual([]);
+      expect(repository.members).toEqual([]);
     });
 
     it("creates nothing when unset or empty", async () => {
       await userService(
-        { INITIAL_ADMIN_DN: "", INITIAL_ADMIN_NAME: "", INITIAL_ADMIN_EMAIL: "" },
+        {
+          INITIAL_OWNER_DN: "",
+          INITIAL_OWNER_NAME: "",
+          INITIAL_OWNER_EMAIL: "",
+          INITIAL_ORGANIZATION: "",
+        },
         repository,
       );
       expect(repository.users).toEqual([alice]);
@@ -114,6 +125,32 @@ describe("UsersModule", () => {
       expect(await users.authenticate(new Headers({ "X-DN": alice.dn }))).toEqual(DEVIN);
       expect(repository.users.filter((user) => user.dn === DEVIN.dn)).toHaveLength(1);
     });
+
+    it("gives a Devin without an organization the development organization", async () => {
+      repository.users.push(DEVIN);
+      const users = await userService({ USER_SERVICE: "devin" }, repository);
+      expect(await users.authenticate(new Headers())).toEqual(DEVIN);
+      expect(repository.users.filter((user) => user.dn === DEVIN.dn)).toHaveLength(1);
+      expect(repository.members).toEqual([
+        { userId: DEVIN.id, slug: DEVIN_ORGANIZATION.slug, role: "owner" },
+      ]);
+    });
+
+    it("leaves a Devin who already belongs to an organization alone", async () => {
+      const users = await userService({ USER_SERVICE: "devin" }, repository);
+      await users.authenticate(new Headers());
+      await users.authenticate(new Headers());
+      expect(repository.members).toHaveLength(1);
+    });
+
+    it("makes Devin the owner of the development organization", async () => {
+      const users = await userService({ USER_SERVICE: "devin" }, repository);
+      await users.authenticate(new Headers());
+      expect(repository.organizations).toEqual([DEVIN_ORGANIZATION]);
+      expect(repository.members).toEqual([
+        { userId: DEVIN.id, slug: DEVIN_ORGANIZATION.slug, role: "owner" },
+      ]);
+    });
   });
 });
 
@@ -124,7 +161,7 @@ describe("loadAppConfig", () => {
       databaseUrl: required.DATABASE_URL,
       authUrl: "http://localhost:3000",
       userService: "certificate",
-      initialAdmin: null,
+      initialOwner: null,
     });
   });
 
@@ -138,15 +175,28 @@ describe("loadAppConfig", () => {
     expect(() => loadAppConfig({ ...required, USER_SERVICE: "nobody" })).toThrow();
   });
 
-  it("requires all INITIAL_ADMIN_* variables together", () => {
-    expect(() => loadAppConfig({ ...required, INITIAL_ADMIN_DN: "CN=Root" })).toThrow(
+  it("requires the initial owner variables together", () => {
+    expect(() => loadAppConfig({ ...required, INITIAL_OWNER_DN: "CN=Root" })).toThrow(
       /set together/,
     );
+    expect(() =>
+      loadAppConfig({ ...required, ...initialOwnerEnv, INITIAL_ORGANIZATION: "" }),
+    ).toThrow(/set together/);
   });
 
-  it("rejects an invalid INITIAL_ADMIN_EMAIL", () => {
+  it("rejects an invalid INITIAL_OWNER_EMAIL", () => {
     expect(() =>
-      loadAppConfig({ ...required, ...initialAdminEnv, INITIAL_ADMIN_EMAIL: "nope" }),
+      loadAppConfig({ ...required, ...initialOwnerEnv, INITIAL_OWNER_EMAIL: "nope" }),
     ).toThrow();
+  });
+
+  it("derives the initial organization's slug from its name", () => {
+    expect(loadAppConfig({ ...required, ...initialOwnerEnv }).initialOwner?.organization).toEqual({
+      name: "Example Corp.",
+      slug: "example-corp",
+    });
+    expect(() =>
+      loadAppConfig({ ...required, ...initialOwnerEnv, INITIAL_ORGANIZATION: "!!!" }),
+    ).toThrow(/letter or digit/);
   });
 });

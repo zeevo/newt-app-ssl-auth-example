@@ -37,9 +37,10 @@ services:
     environment:
       <<: *app-env
       DN_HEADER: x-dn
-      INITIAL_ADMIN_DN: ${INITIAL_ADMIN_DN:-}
-      INITIAL_ADMIN_NAME: ${INITIAL_ADMIN_NAME:-}
-      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-}
+      INITIAL_OWNER_DN: ${INITIAL_OWNER_DN:-}
+      INITIAL_OWNER_NAME: ${INITIAL_OWNER_NAME:-}
+      INITIAL_OWNER_EMAIL: ${INITIAL_OWNER_EMAIL:-}
+      INITIAL_ORGANIZATION: ${INITIAL_ORGANIZATION:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

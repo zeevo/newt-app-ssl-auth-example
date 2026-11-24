@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { slugify } from "@newt-app-ssl-auth-example/auth";
+import type { Organization } from "./users/user";
 
 export const APP_CONFIG = Symbol("AppConfig");
 
-// Unset and empty (e.g. `${INITIAL_ADMIN_DN:-}` in compose) mean the same.
+// Unset and empty (e.g. `${INITIAL_OWNER_DN:-}` in compose) mean the same.
 function optional<T extends z.ZodType>(type: T) {
   return z.preprocess((value) => (value === "" ? undefined : value), type.optional());
 }
@@ -14,15 +16,17 @@ const schema = z.object({
   BETTER_AUTH_SECRET: z.string().min(1),
   USER_SERVICE: z.enum(["certificate", "devin"]).default("certificate"),
   DN_HEADER: z.string().min(1).default("x-dn"),
-  INITIAL_ADMIN_DN: optional(z.string().trim().min(1)),
-  INITIAL_ADMIN_NAME: optional(z.string().trim().min(1)),
-  INITIAL_ADMIN_EMAIL: optional(z.email()),
+  INITIAL_OWNER_DN: optional(z.string().trim().min(1)),
+  INITIAL_OWNER_NAME: optional(z.string().trim().min(1)),
+  INITIAL_OWNER_EMAIL: optional(z.email()),
+  INITIAL_ORGANIZATION: optional(z.string().trim().min(1)),
 });
 
-export interface InitialAdmin {
+export interface InitialOwner {
   dn: string;
   name: string;
   email: string;
+  organization: Organization;
 }
 
 /** Everything the app reads from the environment, validated once at startup. */
@@ -32,8 +36,8 @@ export interface AppConfig {
   authSecret: string;
   userService: "certificate" | "devin";
   dnHeader: string;
-  /** Admin created on startup if no user has this DN yet. */
-  initialAdmin: InitialAdmin | null;
+  /** Owner created on startup, with their organization, if no user has this DN yet. */
+  initialOwner: InitialOwner | null;
 }
 
 export function loadAppConfig(env: NodeJS.ProcessEnv): AppConfig {
@@ -41,11 +45,20 @@ export function loadAppConfig(env: NodeJS.ProcessEnv): AppConfig {
   if (parsed.USER_SERVICE === "devin" && parsed.NODE_ENV === "production") {
     throw new Error("USER_SERVICE=devin is not allowed when NODE_ENV=production");
   }
-  const { INITIAL_ADMIN_DN: dn, INITIAL_ADMIN_NAME: name, INITIAL_ADMIN_EMAIL: email } = parsed;
-  if ((dn || name || email) && !(dn && name && email)) {
+  const {
+    INITIAL_OWNER_DN: dn,
+    INITIAL_OWNER_NAME: name,
+    INITIAL_OWNER_EMAIL: email,
+    INITIAL_ORGANIZATION: organization,
+  } = parsed;
+  if ((dn || name || email || organization) && !(dn && name && email && organization)) {
     throw new Error(
-      "INITIAL_ADMIN_DN, INITIAL_ADMIN_NAME and INITIAL_ADMIN_EMAIL must be set together",
+      "INITIAL_OWNER_DN, INITIAL_OWNER_NAME, INITIAL_OWNER_EMAIL and INITIAL_ORGANIZATION must be set together",
     );
+  }
+  const slug = organization ? slugify(organization) : "";
+  if (organization && !slug) {
+    throw new Error("INITIAL_ORGANIZATION needs at least one letter or digit");
   }
   return {
     databaseUrl: parsed.DATABASE_URL,
@@ -53,6 +66,9 @@ export function loadAppConfig(env: NodeJS.ProcessEnv): AppConfig {
     authSecret: parsed.BETTER_AUTH_SECRET,
     userService: parsed.USER_SERVICE,
     dnHeader: parsed.DN_HEADER,
-    initialAdmin: dn && name && email ? { dn, name, email } : null,
+    initialOwner:
+      dn && name && email && organization
+        ? { dn, name, email, organization: { name: organization, slug } }
+        : null,
   };
 }

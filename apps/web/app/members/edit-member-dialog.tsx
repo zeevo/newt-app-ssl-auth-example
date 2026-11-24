@@ -2,9 +2,11 @@
 
 import { useId, useState } from "react";
 import { PencilIcon, TrashIcon } from "lucide-react";
+import type { Role } from "@newt-app-ssl-auth-example/auth/client";
 import { authClient } from "@/lib/auth-client";
+import { primaryRole } from "@/lib/organization";
+import { RoleSelect } from "@/app/members/role-select";
 import { Button } from "@newt-app-ssl-auth-example/ui/button";
-import { Checkbox } from "@newt-app-ssl-auth-example/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,48 +16,47 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@newt-app-ssl-auth-example/ui/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@newt-app-ssl-auth-example/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@newt-app-ssl-auth-example/ui/field";
 
-export interface EditableUser {
+export interface EditableMember {
   id: string;
-  name: string;
-  dn?: string | null;
-  role?: string | null;
+  role: string;
+  user: { name: string; dn: string | null };
 }
 
-export function EditUserDialog({
-  user,
-  isSelf,
+export function EditMemberDialog({
+  member,
+  organizationId,
+  organizationName,
+  allowOwner,
   onSaved,
 }: {
-  user: EditableUser;
-  isSelf: boolean;
+  member: EditableMember;
+  organizationId: string;
+  organizationName: string;
+  allowOwner: boolean;
   onSaved: () => void;
 }) {
-  const adminId = useId();
+  const roleId = useId();
+  const current = primaryRole(member.role);
   const [open, setOpen] = useState(false);
-  const [admin, setAdmin] = useState(false);
+  const [role, setRole] = useState<Role>(current);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const wasAdmin = user.role === "admin";
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSelf || admin === wasAdmin) {
+    if (role === current) {
       setOpen(false);
       return;
     }
     setPending(true);
     setError("");
-    const { error } = await authClient.admin.setRole({
-      userId: user.id,
-      role: admin ? "admin" : "user",
+    const { error } = await authClient.organization.updateMemberRole({
+      memberId: member.id,
+      role,
+      organizationId,
     });
     setPending(false);
     if (error) {
@@ -69,12 +70,15 @@ export function EditUserDialog({
   async function remove() {
     setPending(true);
     setError("");
-    const { error } = await authClient.admin.removeUser({ userId: user.id });
+    const { error } = await authClient.organization.removeMember({
+      memberIdOrEmail: member.id,
+      organizationId,
+    });
     setPending(false);
     if (error) {
       // Back to the edit form, showing why.
       setConfirming(false);
-      setError(error.message ?? "Could not delete user");
+      setError(error.message ?? "Could not remove member");
       return;
     }
     setOpen(false);
@@ -92,9 +96,9 @@ export function EditUserDialog({
           setConfirming(false);
           return;
         }
-        // Start from the user's current role each time the dialog opens.
+        // Start from the member's current role each time the dialog opens.
         if (next) {
-          setAdmin(wasAdmin);
+          setRole(current);
           setError("");
           setConfirming(false);
         }
@@ -111,10 +115,13 @@ export function EditUserDialog({
         {confirming ? (
           <div className="space-y-6">
             <DialogHeader>
-              <DialogTitle>Delete {user.name}?</DialogTitle>
+              <DialogTitle>
+                Remove {member.user.name} from {organizationName}?
+              </DialogTitle>
               <DialogDescription>
-                They will be signed out and can no longer sign in with their certificate. This
-                cannot be undone.
+                They lose access to {organizationName}. If it is their only organization, their
+                account is deleted and they are signed out, so their certificate no longer gets them
+                in.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -122,44 +129,36 @@ export function EditUserDialog({
                 Cancel
               </Button>
               <Button variant="destructive" disabled={pending} onClick={remove}>
-                {pending ? "Deleting…" : "Delete"}
+                {pending ? "Removing…" : "Remove"}
               </Button>
             </DialogFooter>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-6">
             <DialogHeader>
-              <DialogTitle>Edit {user.name}</DialogTitle>
+              <DialogTitle>Edit {member.user.name}</DialogTitle>
               <DialogDescription>
-                <code className="break-all">{user.dn ?? "No certificate DN"}</code>
+                <code className="break-all">{member.user.dn ?? "No certificate DN"}</code>
               </DialogDescription>
             </DialogHeader>
             <FieldGroup>
-              <Field orientation="horizontal">
-                <Checkbox
-                  id={adminId}
-                  checked={admin}
-                  onCheckedChange={setAdmin}
-                  disabled={isSelf}
-                />
-                <FieldLabel htmlFor={adminId}>Admin</FieldLabel>
+              <Field>
+                <FieldLabel htmlFor={roleId}>Role</FieldLabel>
+                <RoleSelect id={roleId} value={role} onChange={setRole} allowOwner={allowOwner} />
               </Field>
-              {isSelf && <FieldDescription>You can't change your own role.</FieldDescription>}
             </FieldGroup>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
-              {!isSelf && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="sm:mr-auto"
-                  disabled={pending}
-                  onClick={() => setConfirming(true)}
-                >
-                  <TrashIcon />
-                  Delete
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="destructive"
+                className="sm:mr-auto"
+                disabled={pending}
+                onClick={() => setConfirming(true)}
+              >
+                <TrashIcon />
+                Remove
+              </Button>
               <Button type="submit" disabled={pending}>
                 {pending ? "Saving…" : "Save"}
               </Button>

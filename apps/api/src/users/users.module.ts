@@ -3,7 +3,7 @@ import { createDatabase } from "@newt-app-ssl-auth-example/db";
 import { CertificateUserService } from "./certificate-user.service";
 import { CommonNameUserDirectory } from "./common-name-user-directory";
 import { DevinUserService } from "./devin-user.service";
-import { InitialAdmin } from "./initial-admin";
+import { InitialOwner } from "./initial-owner";
 import { DATABASE, KyselyUserRepository } from "./kysely-user.repository";
 import { USER_DIRECTORY } from "./user-directory";
 import { USER_REPOSITORY } from "./user.repository";
@@ -26,7 +26,7 @@ export class UsersModule {
         { provide: USER_REPOSITORY, useClass: KyselyUserRepository },
         { provide: USER_SERVICE, useClass: userServices[config.userService] },
         { provide: USER_DIRECTORY, useClass: CommonNameUserDirectory },
-        InitialAdmin,
+        InitialOwner,
       ],
       exports: [DATABASE, USER_SERVICE, USER_DIRECTORY],
     };

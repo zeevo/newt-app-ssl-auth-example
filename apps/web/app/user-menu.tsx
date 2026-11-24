@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { primaryRole, roleLabels, useActiveMembership } from "@/lib/organization";
 import { Avatar, AvatarFallback } from "@newt-app-ssl-auth-example/ui/avatar";
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ export function initials(name: string): string {
 
 export function UserMenu() {
   const { data: session } = authClient.useSession();
+  const { organization, member } = useActiveMembership();
   if (!session) return null;
   const { name, dn } = session.user;
 
@@ -36,6 +38,11 @@ export function UserMenu() {
           <DropdownMenuLabel>
             <p className="text-sm font-medium text-foreground">{name}</p>
             {dn && <p className="mt-1 font-mono text-xs break-all">{dn}</p>}
+            {organization && member && (
+              <p className="mt-1 text-xs">
+                {roleLabels[primaryRole(member.role)]} of {organization.name}
+              </p>
+            )}
           </DropdownMenuLabel>
         </DropdownMenuGroup>
       </DropdownMenuContent>

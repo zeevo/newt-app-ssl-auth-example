@@ -5,10 +5,6 @@ export interface UserTable {
   emailVerified: boolean;
   image: string | null;
   dn: string | null;
-  role: string | null;
-  banned: boolean | null;
-  banReason: string | null;
-  banExpires: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,7 +18,7 @@ export interface SessionTable {
   ipAddress: string | null;
   userAgent: string | null;
   userId: string;
-  impersonatedBy: string | null;
+  activeOrganizationId: string | null;
 }
 
 export interface AccountTable {
@@ -50,8 +46,39 @@ export interface VerificationTable {
   updatedAt: Date;
 }
 
+export interface OrganizationTable {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+  metadata: string | null;
+  createdAt: Date;
+}
+
+export interface MemberTable {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: string;
+  createdAt: Date;
+}
+
+export interface InvitationTable {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: string | null;
+  status: string;
+  expiresAt: Date;
+  createdAt: Date;
+  inviterId: string;
+}
+
 export interface DB {
   account: AccountTable;
+  invitation: InvitationTable;
+  member: MemberTable;
+  organization: OrganizationTable;
   session: SessionTable;
   user: UserTable;
   verification: VerificationTable;

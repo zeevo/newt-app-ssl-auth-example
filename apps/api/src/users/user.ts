@@ -3,5 +3,10 @@ export interface User {
   dn: string;
   name: string;
   email: string;
-  role: string;
+}
+
+export interface Organization {
+  name: string;
+  /** Unique; identifies the organization across restarts. */
+  slug: string;
 }

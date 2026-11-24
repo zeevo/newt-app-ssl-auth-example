@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { PlusIcon } from "lucide-react";
+import type { Role } from "@newt-app-ssl-auth-example/auth/client";
 import { authClient } from "@/lib/auth-client";
+import { RoleSelect } from "@/app/members/role-select";
 import { Button } from "@newt-app-ssl-auth-example/ui/button";
-import { Checkbox } from "@newt-app-ssl-auth-example/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -22,25 +23,35 @@ import {
 } from "@newt-app-ssl-auth-example/ui/field";
 import { Input } from "@newt-app-ssl-auth-example/ui/input";
 
-export function AddUserDialog({ onAdded }: { onAdded: () => void }) {
+export function AddMemberDialog({
+  organizationId,
+  allowOwner,
+  onAdded,
+}: {
+  organizationId: string;
+  allowOwner: boolean;
+  onAdded: () => void;
+}) {
   const [open, setOpen] = useState(false);
+  const [role, setRole] = useState<Role>("member");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const dn = String(new FormData(event.currentTarget).get("dn")).trim();
     setPending(true);
     setError("");
-    // Name and email come from the user directory on the server. No
-    // password: users sign in only with their client certificate.
-    const { error } = await authClient.createCertificateUser(
-      String(form.get("dn")).trim(),
-      form.get("admin") ? "admin" : "user",
-    );
+    // Someone new gets a user, named from the directory on the server. No
+    // password: they sign in only with their client certificate.
+    const { error } = await authClient.organization.addCertificateMember({
+      dn,
+      role,
+      organizationId,
+    });
     setPending(false);
     if (error) {
-      setError(error.message ?? "Could not add user");
+      setError(error.message ?? "Could not add member");
       return;
     }
     setOpen(false);
@@ -48,18 +59,28 @@ export function AddUserDialog({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (pending) return;
+        if (next) {
+          setRole("member");
+          setError("");
+        }
+        setOpen(next);
+      }}
+    >
       <DialogTrigger render={<Button />}>
         <PlusIcon />
-        Add user
+        Add member
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={submit} className="space-y-6">
           <DialogHeader>
-            <DialogTitle>Add user</DialogTitle>
+            <DialogTitle>Add member</DialogTitle>
             <DialogDescription>
-              They sign in with a client certificate whose DN matches exactly. Their name and email
-              are looked up from the DN.
+              They sign in with a client certificate whose DN matches exactly. Someone new gets
+              their name and email from the directory.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -73,15 +94,20 @@ export function AddUserDialog({ onAdded }: { onAdded: () => void }) {
               />
               <FieldDescription>RFC 2253 order, as nginx reports it.</FieldDescription>
             </Field>
-            <Field orientation="horizontal">
-              <Checkbox id="admin" name="admin" />
-              <FieldLabel htmlFor="admin">Admin</FieldLabel>
+            <Field>
+              <FieldLabel htmlFor="add-member-role">Role</FieldLabel>
+              <RoleSelect
+                id="add-member-role"
+                value={role}
+                onChange={setRole}
+                allowOwner={allowOwner}
+              />
             </Field>
           </FieldGroup>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={pending}>
-              {pending ? "Adding…" : "Add user"}
+              {pending ? "Adding…" : "Add member"}
             </Button>
           </DialogFooter>
         </form>

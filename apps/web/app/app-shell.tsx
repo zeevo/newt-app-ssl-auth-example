@@ -2,15 +2,14 @@
 
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ShieldIcon } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { HomeIcon, SettingsIcon, UsersIcon } from "lucide-react";
+import { OrganizationSwitcher } from "@/app/organization-switcher";
 import { UserMenu } from "@/app/user-menu";
 import { Logo } from "@newt-app-ssl-auth-example/ui/logo";
 import { ModeToggle } from "@newt-app-ssl-auth-example/ui/mode-toggle";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarInset,
@@ -27,10 +26,11 @@ interface NavItem {
   icon: typeof HomeIcon;
 }
 
-const nav: NavItem[] = [{ href: "/", label: "Home", icon: HomeIcon }];
-
-// Shown to admins only, at the bottom of the sidebar.
-const adminNav: NavItem[] = [{ href: "/admin", label: "Admin", icon: ShieldIcon }];
+const nav: NavItem[] = [
+  { href: "/", label: "Home", icon: HomeIcon },
+  { href: "/members", label: "Members", icon: UsersIcon },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
+];
 
 function NavMenu({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return (
@@ -52,10 +52,8 @@ function NavMenu({ items, pathname }: { items: NavItem[]; pathname: string }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  // The static export uses trailing slashes (/admin/); nav hrefs don't.
+  // The static export uses trailing slashes (/members/); nav hrefs don't.
   const pathname = usePathname().replace(/(.)\/$/, "$1");
-  const { data: session } = authClient.useSession();
-  const isAdmin = session?.user.role === "admin";
 
   return (
     <SidebarProvider>
@@ -67,17 +65,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               newt-app
             </span>
           </div>
+          <OrganizationSwitcher />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
             <NavMenu items={nav} pathname={pathname} />
           </SidebarGroup>
         </SidebarContent>
-        {isAdmin && (
-          <SidebarFooter>
-            <NavMenu items={adminNav} pathname={pathname} />
-          </SidebarFooter>
-        )}
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background px-4">
