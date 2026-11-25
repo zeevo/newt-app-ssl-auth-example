@@ -18,9 +18,9 @@ export const DEVIN_ORGANIZATION: Organization = { name: "Development", slug: "de
 export class DevinUserService implements UserService {
   constructor(@Inject(USER_REPOSITORY) private readonly users: UserRepository) {}
 
-  // Also repairs a Devin left without an organization, e.g. by a database
-  // from before organizations, so `pnpm dev:devin` works on any database.
   async authenticate(): Promise<User> {
-    return this.users.ensureOwner(DEVIN, DEVIN_ORGANIZATION);
+    return (
+      (await this.users.findByDn(DEVIN.dn)) ?? this.users.createOwner(DEVIN, DEVIN_ORGANIZATION)
+    );
   }
 }

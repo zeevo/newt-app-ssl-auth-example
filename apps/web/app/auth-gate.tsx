@@ -61,12 +61,7 @@ function OrganizationGate({
     let cancelled = false;
     void (async () => {
       // Fetched fresh: the cached list can still hold the organization just left.
-      let { data } = await authClient.organization.list();
-      // Signing in again lets the server provision them, e.g. Devin in
-      // development, whose session may predate his organization.
-      if (!data?.length && !(await authClient.signIn.ssl()).error) {
-        ({ data } = await authClient.organization.list());
-      }
+      const { data } = await authClient.organization.list();
       if (cancelled) return;
       const first = data?.[0];
       if (!first) {

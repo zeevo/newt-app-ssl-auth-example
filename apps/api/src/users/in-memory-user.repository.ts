@@ -17,15 +17,12 @@ export class InMemoryUserRepository implements UserRepository {
     return this.users.find((user) => user.dn === dn) ?? null;
   }
 
-  async ensureOwner(user: User, organization: Organization): Promise<User> {
-    const existing = this.users.find(({ dn }) => dn === user.dn);
-    if (existing && this.members.some(({ userId }) => userId === existing.id)) return existing;
-    if (!existing) this.users.push(user);
-    const owner = existing ?? user;
+  async createOwner(user: User, organization: Organization): Promise<User> {
+    this.users.push(user);
     if (!this.organizations.some(({ slug }) => slug === organization.slug)) {
       this.organizations.push(organization);
     }
-    this.members.push({ userId: owner.id, slug: organization.slug, role: "owner" });
-    return owner;
+    this.members.push({ userId: user.id, slug: organization.slug, role: "owner" });
+    return user;
   }
 }

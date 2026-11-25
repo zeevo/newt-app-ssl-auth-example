@@ -20,27 +20,13 @@ export class KyselyUserRepository implements UserRepository {
     return row ? { ...row, dn } : null;
   }
 
-  async ensureOwner(user: User, organization: Organization): Promise<User> {
+  async createOwner(user: User, organization: Organization): Promise<User> {
     const now = new Date();
     return this.db.transaction().execute(async (trx) => {
-      const existing = await trx
-        .selectFrom("user")
-        .select(["id", "name", "email"])
-        .where("dn", "=", user.dn)
-        .executeTakeFirst();
-      if (existing) {
-        const membership = await trx
-          .selectFrom("member")
-          .select("id")
-          .where("userId", "=", existing.id)
-          .executeTakeFirst();
-        if (membership) return { ...existing, dn: user.dn };
-      } else {
-        await trx
-          .insertInto("user")
-          .values({ ...user, emailVerified: true, image: null, createdAt: now, updatedAt: now })
-          .execute();
-      }
+      await trx
+        .insertInto("user")
+        .values({ ...user, emailVerified: true, image: null, createdAt: now, updatedAt: now })
+        .execute();
       // Joins the organization if it already exists, e.g. when its owner was
       // removed but other members remain.
       const found = await trx
@@ -66,12 +52,12 @@ export class KyselyUserRepository implements UserRepository {
         .values({
           id: randomUUID(),
           organizationId,
-          userId: existing?.id ?? user.id,
+          userId: user.id,
           role: "owner",
           createdAt: now,
         })
         .execute();
-      return existing ? { ...existing, dn: user.dn } : user;
+      return user;
     });
   }
 }

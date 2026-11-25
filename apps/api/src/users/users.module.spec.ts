@@ -126,16 +126,6 @@ describe("UsersModule", () => {
       expect(repository.users.filter((user) => user.dn === DEVIN.dn)).toHaveLength(1);
     });
 
-    it("gives a Devin without an organization the development organization", async () => {
-      repository.users.push(DEVIN);
-      const users = await userService({ USER_SERVICE: "devin" }, repository);
-      expect(await users.authenticate(new Headers())).toEqual(DEVIN);
-      expect(repository.users.filter((user) => user.dn === DEVIN.dn)).toHaveLength(1);
-      expect(repository.members).toEqual([
-        { userId: DEVIN.id, slug: DEVIN_ORGANIZATION.slug, role: "owner" },
-      ]);
-    });
-
     it("leaves a Devin who already belongs to an organization alone", async () => {
       const users = await userService({ USER_SERVICE: "devin" }, repository);
       await users.authenticate(new Headers());

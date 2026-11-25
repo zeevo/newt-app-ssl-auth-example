@@ -21,6 +21,6 @@ export class InitialOwner implements OnApplicationBootstrap {
     const owner = this.config.initialOwner;
     if (!owner || (await this.users.findByDn(owner.dn))) return;
     const { organization, ...user } = owner;
-    await this.users.ensureOwner({ id: randomUUID(), ...user }, organization);
+    await this.users.createOwner({ id: randomUUID(), ...user }, organization);
   }
 }
